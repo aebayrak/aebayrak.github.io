@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UPC-A Barcode Generator</title>
+
+  <!-- JsBarcode Library -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .result {
+      margin-top: 30px;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+
+    #barcode {
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+    }
+
+    .screenshot-text {
+      margin-top: 15px;
+      font-size: 16px;
+      color: #444;
+      font-weight: bold;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2>Enter 9-Digit Lehigh ID</h2>
+
+    <input
+      type="tel"
+      id="codeInput"
+      maxlength="9"
+      placeholder="123456789"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      autocomplete="off"
+    />
+
+    <button onclick="generateBarcode()">Generate Barcode</button>
+
+    <div class="error" id="errorMsg"></div>
+
+    <div class="result">
+      <svg id="barcode"></svg>
+
+      <p id="screenshotText" class="screenshot-text">
+        Take a Screenshot of the Barcode for Check-in
+      </p>
+    </div>
+  </div>
+
+  <script>
+    function calculateUPCACheckDigit(code11) {
+      let oddSum = 0;
+      let evenSum = 0;
+
+      for (let i = 0; i < 11; i++) {
+        const digit = parseInt(code11[i]);
+
+        if (i % 2 === 0) {
+          oddSum += digit;
+        } else {
+          evenSum += digit;
+        }
+      }
+
+      const total = (oddSum * 3) + evenSum;
+      return (10 - (total % 10)) % 10;
+    }
+
+    function generateBarcode() {
+      const input = document.getElementById("codeInput").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
+
+      errorMsg.textContent = "";
+
+      // Validate exactly 9 digits
+      if (!/^\d{9}$/.test(input)) {
+        errorMsg.textContent = "Please enter exactly 9 digits.";
+        document.getElementById("screenshotText").style.display = "none";
+        return;
+      }
+
+      // Add leading zeros
+      const baseCode = "00" + input;
+
+      // Calculate UPC-A check digit
+      const checkDigit = calculateUPCACheckDigit(baseCode);
+
+      // Final 12-digit UPC-A code
+      const upcCode = baseCode + checkDigit;
+
+      // Generate barcode
+      JsBarcode("#barcode", upcCode, {
+        format: "UPC",
+        width: 2,
+        height: 110,
+        margin: 10,
+        fontSize: 20,
+        textMargin: 4,
+        displayValue: true
+      });
+
+      // Show screenshot instruction
+      document.getElementById("screenshotText").style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
